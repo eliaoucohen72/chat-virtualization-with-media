@@ -1,0 +1,31 @@
+audio::-webkit-media-controls-enclosure {
+  background-color: transparent;
+}
+
+audio::-webkit-media-controls-panel {
+  padding: 0;
+}
+
+audio#audio-concat-bubble {
+  display: none;
+}
+/* 
+audio#audio-concat-bubble::-webkit-media-controls-timeline {
+  visibility: hidden;
+}
+
+audio#audio-concat-bubble::-webkit-media-controls-current-time-display {
+  visibility: hidden;
+}
+
+audio#audio-concat-bubble::-webkit-media-controls-time-remaining-display {
+  visibility: hidden;
+}
+
+audio#audio-concat-bubble::-webkit-media-controls-mute-button {
+  visibility: hidden;
+}
+
+audio#audio-concat-bubble::-webkit-media-controls-play-button {
+  visibility: hidden;
+} */

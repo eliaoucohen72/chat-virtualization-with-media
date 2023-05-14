@@ -1,0 +1,12 @@
+export const USER_BAR_HEIGHT = '65px';
+export const ATTACHMENT_BAR_HEIGHT = '58px';
+export const MESSAGE_BAR_HEIGHT = '66px';
+export const BIG_SCREEN_WIDTH = '1600px';
+export const CHAT_INPUT_MAX_CHARACTER = 2000;
+export const COLLAPSED_SIDEBAR_WIDTH = 173;
+export const EXPANDED_SIDEBAR_WIDTH = 320;
+export const MAX_VIDEO_RECORDING_TIME = 30000;
+export const SEARCH_CHAT_WIDTH = 270;
+export const MEDIA_BUBBLE_MAX_WIDTH = 300;
+export const MEDIA_BUBBLE_MAX_HEIGHT = 300;
+// export const CHAT_MESSAGES_MAX_RENDER = 500;
