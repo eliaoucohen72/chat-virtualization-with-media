@@ -1,5 +1,4 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { FormattedMessage } from 'react-intl';
 import PropTypes from 'prop-types';
 import makeStyles from '@mui/styles/makeStyles';
 import { Button } from '@mui/material';
@@ -163,9 +162,7 @@ function ContactDetails(props) {
   const renderGroupContacts = () => (
     <div className={classes.groupContactWrapper}>
       <div className={classes.userNumberWrapper}>
-        <div className={classes.fs15fw700}>
-          {renderGroupMemberList().length} <FormattedMessage {...messages.users} />
-        </div>
+        <div className={classes.fs15fw700}>{`${renderGroupMemberList().length}${translateMessage({ ...messages.users })}`}</div>
         {editMode && (
           <div onClick={addContactsGroup} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
             <Button disableRipple className={classes.addButton}>
@@ -217,9 +214,7 @@ function ContactDetails(props) {
   return (
     <div className={classes.wrapper}>
       <div className={classes.header}>
-        <div className={classes.fs15fw700}>
-          <FormattedMessage {...messages.contactDetails} />
-        </div>
+        <div className={classes.fs15fw700}>{translateMessage({ ...messages.contactDetails })}</div>
         <div>
           {props.contact.contactType === contactTypes.group ? (
             editMode ? (
@@ -263,17 +258,13 @@ function ContactDetails(props) {
               <div className={classes.m16z0z1620}>
                 {props.contact.department && (
                   <>
-                    <div className={classes.fs15fw700}>
-                      <FormattedMessage {...messages.department} />
-                    </div>
+                    <div className={classes.fs15fw700}>{translateMessage({ ...messages.department })}</div>
                     <div className={classes.fs15fw400mb16}>{props.contact.department}</div>
                   </>
                 )}
                 {props.contact.role && (
                   <>
-                    <div className={classes.fs15fw700}>
-                      <FormattedMessage {...messages.role} />
-                    </div>
+                    <div className={classes.fs15fw700}>{translateMessage({ ...messages.role })}</div>
                     <div className={classes.fs15fw400mb16}>{props.contact.role}</div>
                   </>
                 )}
@@ -288,17 +279,13 @@ function ContactDetails(props) {
               <div className={classes.m16z0z1620}>
                 {props.contact.shortCode && (
                   <>
-                    <div className={classes.fs15fw700}>
-                      <FormattedMessage {...messages.shortCode} />
-                    </div>
+                    <div className={classes.fs15fw700}>{translateMessage({ ...messages.shortCode })}</div>
                     <div className={classes.fs15fw400mb16}>{props.contact.shortCode}</div>
                   </>
                 )}
                 {props.contact.phone && (
                   <>
-                    <div className={classes.fs15fw700}>
-                      <FormattedMessage {...messages.phoneNumber} />
-                    </div>
+                    <div className={classes.fs15fw700}>{translateMessage({ ...messages.phoneNumber })}</div>
                     <div className={classes.phone}>{parsePhoneNumber(props.contact.phone)}</div>
                   </>
                 )}

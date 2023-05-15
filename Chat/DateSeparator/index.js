@@ -1,12 +1,12 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import makeStyles from '@mui/styles/makeStyles';
-import { FormattedMessage } from 'react-intl';
 
 import messages from './messages';
 import { style } from './style';
 import { GlobalContext } from '../../App/context';
 import { returnActivityDate } from '../../../utils/commonFunctions';
+import { translateMessage } from '../../../i18n';
 
 const useStyles = makeStyles(style);
 
@@ -19,11 +19,9 @@ const DateSeparator = props => {
    * Return the date of the message or today
    */
   const returnDateSeparator = () =>
-    new Date(props.date).toDateString() === new Date().toDateString() ? (
-      <FormattedMessage {...messages.today} />
-    ) : (
-      returnActivityDate(props.date, language)
-    );
+    new Date(props.date).toDateString() === new Date().toDateString()
+      ? translateMessage({ ...messages.today })
+      : returnActivityDate(props.date, language);
 
   return (
     <div className={classes.wrapper}>

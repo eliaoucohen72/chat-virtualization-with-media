@@ -1,4 +1,4 @@
-import React, { useEffect, useState, memo, useContext, useMemo } from 'react';
+import React, { useEffect, useState, memo, useContext, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import makeStyles from '@mui/styles/makeStyles';
 import { CellMeasurer, CellMeasurerCache, List, AutoSizer } from 'react-virtualized';
@@ -23,6 +23,7 @@ import { LANGUAGE_DIRECTIONS } from '../../App/enums';
 import { isImageFile, isVideoFile } from '../../../sdk/src/utils/commonFunctions';
 import { MEDIA_BUBBLE_MAX_HEIGHT, MEDIA_BUBBLE_MAX_WIDTH } from '../constants';
 import Loader from '../../../components/Loader';
+import DoubleChevronDown from '../../../components/SVGComponents/doubleChevronDown';
 
 const useStyles = makeStyles(style);
 
@@ -43,17 +44,22 @@ const ChatContent = props => {
     fixedWidth: true,
     defaultHeight: 80
   });
+  // const cache = useRef(
+  //   new CellMeasurerCache({
+  //     fixedWidth: true,
+  //     defaultHeight: 80
+  //   })
+  // ).current;
   const [currentPlayingAudio, setCurrentPlayingAudio] = useState(null);
   const [length, setLength] = useState(props.contact.messages.length);
+  const [isScrolling, setIsScrolling] = useState(false);
 
   useEffect(() => {
     console.debug('UI.useEffect', 'ChatContent', 'length', length, 'props.contact.messages.length', props.contact.messages.length);
     if (length !== props.contact.messages.length) {
       setTimeout(() => {
+        console.log('ChatContent scrollToIndex');
         setScrollToIndex(props.contact.messages.length - 1);
-        // console.log('aaa ', listRef.current);
-        // const listNode = listRef.current.Grid._scrollingContainer;
-        // listNode.scrollTop = listNode.scrollHeight;
         setLength(props.contact.messages.length);
       }, 1000);
     }
@@ -138,6 +144,7 @@ const ChatContent = props => {
    * @param  {array} messages
    */
   const renderedParsedMessages = useMemo(() => {
+    console.log('UI.useEffect', 'ChatContent', 'renderedParsedMessages');
     const messageList = props.contact.messages;
     let nickname = '';
     let sendingDate = '';
@@ -185,18 +192,21 @@ const ChatContent = props => {
   const isTheSameSender = (index, parsedMessages) =>
     parsedMessages.length <= 1 || !index ? true : parsedMessages[index].sender === parsedMessages[index - 1].sender;
 
-  const returnBubblePaddingByScreenResolutionAndSender = sender => {
-    if (sender !== 'them') {
-      if (props.chatPopoverMode || !props.isBigScreen) {
-        return language === LANGUAGES.HE ? '0 0 0 20px' : '0 20px 0 0';
+  const returnBubblePaddingByScreenResolutionAndSender = useCallback(
+    sender => {
+      if (sender !== 'them') {
+        if (props.chatPopoverMode || !props.isBigScreen) {
+          return language === LANGUAGES.HE ? '0 0 0 20px' : '0 20px 0 0';
+        }
+        return language === LANGUAGES.HE ? '0 0 0 100px' : '0 100px 0 0';
       }
-      return language === LANGUAGES.HE ? '0 0 0 100px' : '0 100px 0 0';
-    }
-    if (props.chatPopoverMode || !props.isBigScreen) {
-      return language === LANGUAGES.HE ? '0 20px 0 0' : '0 0 0 20px';
-    }
-    return language === LANGUAGES.HE ? '0 100px 0 0' : '0 0 0 100px';
-  };
+      if (props.chatPopoverMode || !props.isBigScreen) {
+        return language === LANGUAGES.HE ? '0 20px 0 0' : '0 0 0 20px';
+      }
+      return language === LANGUAGES.HE ? '0 100px 0 0' : '0 0 0 100px';
+    },
+    [language, props.chatPopoverMode, props.isBigScreen]
+  );
 
   const renderSenderNickname = (contact, message) => {
     if (message.sender === 'me') {
@@ -208,56 +218,59 @@ const ChatContent = props => {
     return contact.nickname;
   };
 
-  const renderActivityCallLog = message => {
-    if (
-      message.activityStatus === ACTIVITY_STATUSES.COMPLETED ||
-      (!message.activityStatus &&
-        (message.activityType === ACTIVITY_TYPES.SOS ||
-          message.activityType === ACTIVITY_TYPES.WORKING_ALONE ||
-          message.activityType === ACTIVITY_TYPES.WORKING_AT_RISK ||
-          message.activityType === ACTIVITY_TYPES.MAN_DOWN))
-    ) {
-      return (
-        <div className={classes.activityCallLogWrapper}>
-          <div className={classes.activityTime}>{returnFormattedTime(message.sendingDate)}</div>
-          <div className={classes.flexRowCenter}>
-            <div className={`${classes.flexRowCenter} ${classes.s15w600}`}>
-              <div>{message.activityType}</div>&nbsp;
-              <div>{translateMessage({ ...translationMessages.by })}</div>&nbsp;
-              <div>{renderSenderNickname(props.contact, message)}</div>
-              &nbsp; &nbsp;
-            </div>
-            {message.activityStatus === ACTIVITY_STATUSES.COMPLETED && (
-              <div className={classes.s15w400grey}>{convertSecondsToHHMMSS(message.duration)}</div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    if (message.activityStatus === ACTIVITY_STATUSES.MISSED) {
-      return (
-        <div className={classes.activityCallLogWrapper}>
-          <div className={classes.activityTime}>{returnFormattedTime(message.sendingDate)}</div>
-          <div className={classes.flexRowCenter}>
-            <div className={`${classes.flexRowCenter} ${classes.s15w600}`}>
-              <div>
-                {message.sender === 'me'
-                  ? translateMessage({ ...translationMessages.missedCallTo })
-                  : translateMessage({ ...translationMessages.missedCallFrom })}
+  const renderActivityCallLog = useCallback(
+    message => {
+      if (
+        message.activityStatus === ACTIVITY_STATUSES.COMPLETED ||
+        (!message.activityStatus &&
+          (message.activityType === ACTIVITY_TYPES.SOS ||
+            message.activityType === ACTIVITY_TYPES.WORKING_ALONE ||
+            message.activityType === ACTIVITY_TYPES.WORKING_AT_RISK ||
+            message.activityType === ACTIVITY_TYPES.MAN_DOWN))
+      ) {
+        return (
+          <div className={classes.activityCallLogWrapper}>
+            <div className={classes.activityTime}>{returnFormattedTime(message.sendingDate)}</div>
+            <div className={classes.flexRowCenter}>
+              <div className={`${classes.flexRowCenter} ${classes.s15w600}`}>
+                <div>{message.activityType}</div>&nbsp;
+                <div>{translateMessage({ ...translationMessages.by })}</div>&nbsp;
+                <div>{renderSenderNickname(props.contact, message)}</div>
+                &nbsp; &nbsp;
               </div>
-              &nbsp;
-              <div>
-                {props.contact.contactType === contactTypes.group ? message.nickname : /* get nickname by contactId */ props.contact.nickname}
-              </div>
+              {message.activityStatus === ACTIVITY_STATUSES.COMPLETED && (
+                <div className={classes.s15w400grey}>{convertSecondsToHHMMSS(message.duration)}</div>
+              )}
             </div>
           </div>
-        </div>
-      );
-    }
+        );
+      }
 
-    return null;
-  };
+      if (message.activityStatus === ACTIVITY_STATUSES.MISSED) {
+        return (
+          <div className={classes.activityCallLogWrapper}>
+            <div className={classes.activityTime}>{returnFormattedTime(message.sendingDate)}</div>
+            <div className={classes.flexRowCenter}>
+              <div className={`${classes.flexRowCenter} ${classes.s15w600}`}>
+                <div>
+                  {message.sender === 'me'
+                    ? translateMessage({ ...translationMessages.missedCallTo })
+                    : translateMessage({ ...translationMessages.missedCallFrom })}
+                </div>
+                &nbsp;
+                <div>
+                  {props.contact.contactType === contactTypes.group ? message.nickname : /* get nickname by contactId */ props.contact.nickname}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return null;
+    },
+    [classes.activityCallLogWrapper, classes.activityTime, classes.flexRowCenter, classes.s15w400grey, classes.s15w600, props.contact]
+  );
 
   const renderAffiliationLog = message => {
     let content = '';
@@ -281,114 +294,156 @@ const ChatContent = props => {
     );
   };
 
-  const onMouseOver = index => setHover(index);
-  const onMouseLeave = () => setHover(false);
+  const onMouseOver = useCallback(index => setHover(index), []);
+  const onMouseLeave = useCallback(() => setHover(false), []);
 
-  const renderBubble = (rowData, index, parsedMessages, isTempMessage) => (
-    <div style={{ padding: returnBubblePaddingByScreenResolutionAndSender(isTempMessage ? 'me' : rowData.sender) }}>
-      <Bubble
-        index={index}
-        listRef={listRef}
-        isHovered={hover === index}
-        isGroupMessage={props.contact.contactType === contactTypes.group}
-        message={isTempMessage ? props.tempMessage : rowData}
-        isTheSameSender={isTempMessage ? true : isTheSameSender(index, parsedMessages)}
-        flyToSpecificAddress={props.flyToSpecificAddress}
-        mapCapability={props.mapCapability}
-        groupMembers={props.contact.members ? [...props.contact.members].map(m => m[1]) : []}
-        searchInput={props.searchInput}
-        chatPopoverMode={props.chatPopoverMode}
-        handleSetMessageAttachments={props.handleSetMessageAttachments}
-        handleDialogOpen={props.handleDialogOpen}
-        setForwardMessage={props.setForwardMessage}
-        setReplyMessage={props.setReplyMessage}
-        contact={props.contact}
-        jumpToMessage={props.jumpToMessage}
-        disableForward={rowData.isPlaybackMessage}
-        currentPlayingAudio={currentPlayingAudio}
-        setCurrentPlayingAudio={setCurrentPlayingAudio}
-      />
-    </div>
-  );
-
-  const unConcatBubble = firstElement => {
-    const list = pttPlaybackList.map(e => (e.elements[0].id === firstElement.id ? { ...e, concat: false } : e));
-    setPttPlaybackList(list);
-  };
-
-  const renderPlaybackBubble = messages => {
-    const { isFirst, sender } = messages[0];
-    return (
-      <div style={{ padding: returnBubblePaddingByScreenResolutionAndSender(sender) }}>
-        <PlaybackBubble
-          messages={messages}
-          isFirst={isFirst}
-          sender={sender}
-          unConcatBubble={unConcatBubble}
+  const renderBubble = useCallback(
+    (rowData, index, parsedMessages, isTempMessage) => (
+      <div style={{ padding: returnBubblePaddingByScreenResolutionAndSender(isTempMessage ? 'me' : rowData.sender) }}>
+        <Bubble
+          index={index}
+          listRef={listRef}
+          isHovered={hover === index}
+          isGroupMessage={props.contact.contactType === contactTypes.group}
+          message={isTempMessage ? props.tempMessage : rowData}
+          isTheSameSender={isTempMessage ? true : isTheSameSender(index, parsedMessages)}
+          flyToSpecificAddress={props.flyToSpecificAddress}
+          mapCapability={props.mapCapability}
+          groupMembers={props.contact.members ? [...props.contact.members].map(m => m[1]) : []}
+          searchInput={props.searchInput}
+          chatPopoverMode={props.chatPopoverMode}
+          handleSetMessageAttachments={props.handleSetMessageAttachments}
+          handleDialogOpen={props.handleDialogOpen}
+          setForwardMessage={props.setForwardMessage}
+          setReplyMessage={props.setReplyMessage}
+          contact={props.contact}
+          jumpToMessage={props.jumpToMessage}
+          disableForward={rowData.isPlaybackMessage}
           currentPlayingAudio={currentPlayingAudio}
           setCurrentPlayingAudio={setCurrentPlayingAudio}
-          chatPopoverMode={props.chatPopoverMode}
         />
       </div>
-    );
-  };
+    ),
+    [
+      currentPlayingAudio,
+      hover,
+      listRef,
+      props.chatPopoverMode,
+      props.contact,
+      props.flyToSpecificAddress,
+      props.handleDialogOpen,
+      props.handleSetMessageAttachments,
+      props.jumpToMessage,
+      props.mapCapability,
+      props.searchInput,
+      props.setForwardMessage,
+      props.setReplyMessage,
+      props.tempMessage,
+      returnBubblePaddingByScreenResolutionAndSender
+    ]
+  );
 
-  // eslint-disable-next-line no-shadow
-  const rowRenderer = ({ index, style, key, parent, parsedMessages, nonPlaybackMessages }) => {
-    const rowData = parsedMessages[index];
-    const isConcatBubble = pttPlaybackList.find(e => e.elements.find(x => x.id === rowData.id) && e.concat);
-    const isFirstMultiPlaybackBubble = pttPlaybackList.find(e => e.elements[0].id === rowData.id && e.concat);
+  const unConcatBubble = useCallback(
+    firstElement => {
+      const list = pttPlaybackList.map(e => (e.elements[0].id === firstElement.id ? { ...e, concat: false } : e));
+      setPttPlaybackList(list);
+    },
+    [pttPlaybackList]
+  );
 
-    return (
-      <CellMeasurer key={key} cache={cache} parent={parent} columnIndex={0} rowIndex={index}>
-        {({ measure, registerChild }) => (
-          <div
-            ref={registerChild}
-            onLoad={measure}
-            // onTransitionEnd={measure}
-            // onAnimationEnd={measure}
-            style={{
-              ...style,
-              direction: language === LANGUAGES.HE ? LANGUAGE_DIRECTIONS.RTL : LANGUAGE_DIRECTIONS.LTR /*, height: rowHeightMap.get(rowData.id) */
-            }}
-            onMouseOver={() => onMouseOver(index)}
-            onMouseLeave={onMouseLeave}
-            onFocus={() => 0}>
-            <div className={classes.padding020}>{rowData.dateSeparator && <DateSeparator date={rowData.sendingDate} />}</div>
-            {rowData.isActivity ? (
-              renderActivityCallLog(rowData)
-            ) : rowData.affiliationAction ? (
-              renderAffiliationLog(rowData)
-            ) : // Playback
-            isPlaybackMessage(rowData) ? (
-              //Single playback
-              !isFirstMultiPlaybackBubble && !isConcatBubble ? (
-                renderPlaybackBubble([rowData])
-              ) : isFirstMultiPlaybackBubble ? (
-                // Multi playback
-                renderPlaybackBubble(isConcatBubble.elements)
-              ) : null
-            ) : index === parsedMessages.length - 1 ? (
-              props.tempMessage ? (
-                <>
-                  {renderBubble(rowData, index, parsedMessages)}
-                  {renderBubble(rowData, index, parsedMessages, true)}
-                </>
-              ) : nonPlaybackMessages.map(e => e.id).includes(rowData.id) ? (
+  const renderPlaybackBubble = useCallback(
+    messages => {
+      const { isFirst, sender } = messages[0];
+      return (
+        <div style={{ padding: returnBubblePaddingByScreenResolutionAndSender(sender) }}>
+          <PlaybackBubble
+            messages={messages}
+            isFirst={isFirst}
+            sender={sender}
+            unConcatBubble={unConcatBubble}
+            currentPlayingAudio={currentPlayingAudio}
+            setCurrentPlayingAudio={setCurrentPlayingAudio}
+            chatPopoverMode={props.chatPopoverMode}
+          />
+        </div>
+      );
+    },
+    [currentPlayingAudio, props.chatPopoverMode, returnBubblePaddingByScreenResolutionAndSender, unConcatBubble]
+  );
+
+  const rowRenderer = useCallback(
+    // eslint-disable-next-line no-shadow
+    ({ index, style, key, parent }) => {
+      const parsedMessages = renderedParsedMessages;
+      const rowData = parsedMessages[index];
+      const isConcatBubble = pttPlaybackList.find(e => e.elements.find(x => x.id === rowData.id) && e.concat);
+      const isFirstMultiPlaybackBubble = pttPlaybackList.find(e => e.elements[0].id === rowData.id && e.concat);
+
+      return (
+        <CellMeasurer key={key} cache={cache} parent={parent} columnIndex={0} rowIndex={index}>
+          {({ measure, registerChild }) => (
+            <div
+              ref={registerChild}
+              onLoad={measure}
+              // onTransitionEnd={measure}
+              // onAnimationEnd={measure}
+              style={{
+                ...style,
+                direction: language === LANGUAGES.HE ? LANGUAGE_DIRECTIONS.RTL : LANGUAGE_DIRECTIONS.LTR /*, height: rowHeightMap.get(rowData.id) */
+              }}
+              onMouseOver={() => onMouseOver(index)}
+              onMouseLeave={onMouseLeave}
+              onFocus={() => 0}>
+              <div className={classes.padding020}>{rowData.dateSeparator && <DateSeparator date={rowData.sendingDate} />}</div>
+              {rowData.isActivity ? (
+                renderActivityCallLog(rowData)
+              ) : rowData.affiliationAction ? (
+                renderAffiliationLog(rowData)
+              ) : // Playback
+              isPlaybackMessage(rowData) ? (
+                //Single playback
+                !isFirstMultiPlaybackBubble && !isConcatBubble ? (
+                  renderPlaybackBubble([rowData])
+                ) : isFirstMultiPlaybackBubble ? (
+                  // Multi playback
+                  renderPlaybackBubble(isConcatBubble.elements)
+                ) : null
+              ) : index === parsedMessages.length - 1 ? (
+                props.tempMessage ? (
+                  <>
+                    {renderBubble(rowData, index, parsedMessages)}
+                    {renderBubble(rowData, index, parsedMessages, true)}
+                  </>
+                ) : !isPlaybackMessage(rowData) ? (
+                  renderBubble(rowData, index, parsedMessages)
+                ) : null
+              ) : !isPlaybackMessage(rowData) ? (
                 renderBubble(rowData, index, parsedMessages)
-              ) : null
-            ) : nonPlaybackMessages.map(e => e.id).includes(rowData.id) ? (
-              renderBubble(rowData, index, parsedMessages)
-            ) : null}
-          </div>
-        )}
-      </CellMeasurer>
-    );
-  };
+              ) : null}
+            </div>
+          )}
+        </CellMeasurer>
+      );
+    },
+    [
+      cache,
+      classes.padding020,
+      language,
+      onMouseLeave,
+      onMouseOver,
+      props.tempMessage,
+      pttPlaybackList,
+      renderActivityCallLog,
+      renderBubble,
+      renderPlaybackBubble,
+      renderedParsedMessages
+    ]
+  );
 
   const onRowsRendered = data => {
     const { startIndex, stopIndex } = data;
     if (scrollToIndex !== -1 && (scrollToIndex >= startIndex || scrollToIndex <= stopIndex)) {
+      console.log('ChatContent scrollToIndex');
       setScrollToIndex(-1);
     }
   };
@@ -397,7 +452,6 @@ const ChatContent = props => {
    * Render the chat messages
    */
   const renderMessages = () => {
-    const parsedMessages = renderedParsedMessages;
     const concatMessageIds = [];
     pttPlaybackList
       .filter(e => e.concat)
@@ -408,23 +462,21 @@ const ChatContent = props => {
         });
       });
 
-    const nonPlaybackMessages = parsedMessages.filter(e => !isPlaybackMessage(e));
-
     return (
       <AutoSizer>
         {({ width, height }) => (
           <List
             ref={listRef}
-            estimatedRowSize={80}
             onScroll={onScroll}
             style={{ paddingBottom: '30px' }}
             scrollToIndex={scrollToIndex}
             onRowsRendered={onRowsRendered}
             height={height}
             width={width}
-            rowCount={parsedMessages.length}
-            rowRenderer={p => rowRenderer({ ...p, parsedMessages, nonPlaybackMessages })}
+            rowCount={props.contact.messages.length}
+            rowRenderer={rowRenderer}
             rowHeight={cache.rowHeight}
+            deferredMeasurementCache={cache}
           />
         )}
       </AutoSizer>
@@ -450,6 +502,7 @@ const ChatContent = props => {
   );
 
   const onScroll = e => {
+    setIsScrolling(previous => !previous);
     if (e.scrollTop === 0) {
       // To prevent the scroll top reached on opening
       if (firstScrollTop) {
@@ -473,6 +526,22 @@ const ChatContent = props => {
     // }
   };
 
+  const goToChatBottom = useCallback(() => {
+    setScrollToIndex(props.contact.messages.length - 1);
+  }, [props.contact.messages.length, setScrollToIndex]);
+
+  const goToChatBottomButton = useMemo(
+    () =>
+      listRef.current &&
+      listRef.current.Grid._rowStopIndex < props.contact.messages.length - 5 && (
+        <div className={classes.goToChatBottom} onClick={goToChatBottom}>
+          <DoubleChevronDown />
+        </div>
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [classes.goToChatBottom, goToChatBottom, listRef, props.contact.messages.length, isScrolling]
+  );
+
   return props.contact.messages ? (
     <>
       {!props.contact.messages.length ? (
@@ -484,13 +553,14 @@ const ChatContent = props => {
         <div className={classes.messageWrapper}>
           <>
             {loading && (
-              <div style={{ zIndex: 1, height: '100%', position: 'absolute', width: '100%', backgroundColor: 'white' }}>
+              <div className={classes.loader}>
                 <Loader />
               </div>
             )}
             {props.isFetchingChatTopHistory && renderFetchingTopHistory()}
             {renderMessages()}
             {props.isFetchingChatBottomHistory && renderFetchingBottomHistory()}
+            {goToChatBottomButton}
           </>
         </div>
       )}

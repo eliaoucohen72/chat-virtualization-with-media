@@ -83,6 +83,7 @@ const Chat = props => {
       setLoading(true);
       console.debug('UI.useEffect', 'Chat', 'contact changed');
       sleep(1000).then(() => {
+        console.log('Chat scrollToIndex');
         setScrollToIndex(props.contact.chatBox.getMessages().length - 1);
         // console.log('aaa ', listRef.current);
         // const listNode = listRef.current.Grid._scrollingContainer;

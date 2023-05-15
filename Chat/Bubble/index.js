@@ -156,6 +156,7 @@ const Bubble = props => {
           onLoadedMetadata={() => props.listRef.current.recomputeRowHeights(props.index)}
           ref={videoRef}
           className={classes.mediaAttachment}
+          style={{ width: props.message.width, height: props.message.height }}
           src={src}
           controls
         />
@@ -181,17 +182,19 @@ const Bubble = props => {
   const renderGeoAttachment = () => {
     const { glLat, glLon } = props.message;
     return (
-      <StaticMap
-        mapboxApiAccessToken={window.wideBridgeConfig.mapBox.token}
-        width="100%"
-        height={`${MEDIA_BUBBLE_MAX_HEIGHT}px`}
-        latitude={glLat}
-        longitude={glLon}
-        zoom={DEFAULT_VIEWPORT.zoom}>
-        <Marker latitude={glLat} longitude={glLon} zoom={DEFAULT_VIEWPORT.zoom}>
-          <MarkerPointer />
-        </Marker>
-      </StaticMap>
+      <div style={{ width: 300, height: 300 }}>
+        <StaticMap
+          mapboxApiAccessToken={window.wideBridgeConfig.mapBox.token}
+          width="100%"
+          height={`${MEDIA_BUBBLE_MAX_HEIGHT}px`}
+          latitude={glLat}
+          longitude={glLon}
+          zoom={DEFAULT_VIEWPORT.zoom}>
+          <Marker latitude={glLat} longitude={glLon} zoom={DEFAULT_VIEWPORT.zoom}>
+            <MarkerPointer />
+          </Marker>
+        </StaticMap>
+      </div>
     );
   };
 

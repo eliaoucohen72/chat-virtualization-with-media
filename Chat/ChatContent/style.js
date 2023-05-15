@@ -79,5 +79,23 @@ export const style = {
     alignItems: 'center',
     left: '50%',
     transform: 'translate(-50%, 0%)'
+  },
+  goToChatBottom: {
+    position: 'absolute',
+    display: 'flex',
+    bottom: '30px',
+    left: '30px',
+    backgroundColor: COLOR_MAP.lightGrey,
+    padding: '15px',
+    borderRadius: '49px',
+    cursor: 'pointer',
+    boxShadow: 'rgba(0, 0, 0, 0.2) 0px 2px 6px'
+  },
+  loader: {
+    zIndex: 1,
+    height: '100%',
+    position: 'absolute',
+    width: '100%',
+    backgroundColor: 'white'
   }
 };
